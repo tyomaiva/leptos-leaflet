@@ -1,4 +1,4 @@
-use leaflet::Map;
+use leaflet::{LatLng, Map};
 use leptos::{html::Div, *};
 use wasm_bindgen::prelude::*;
 use web_sys::HtmlDivElement;
@@ -14,8 +14,8 @@ pub fn MapContainer(
     #[prop(into, optional)] class: MaybeSignal<String>,
     #[prop(into, optional)] style: MaybeSignal<String>,
     /// Centers the map on the given location
-    #[prop(into, optional)]
-    center: Option<Position>,
+    #[prop(into)]
+    center: MaybeSignal<Position>,
     /// Zoom level of the map. Defaults to 10.0
     #[prop(optional, default = 10.0)]
     zoom: f64,
@@ -59,9 +59,7 @@ pub fn MapContainer(
             let map_div = map_div.unchecked_ref::<HtmlDivElement>();
             let options = leaflet::MapOptions::new();
             options.set_zoom(zoom);
-            if let Some(center) = center {
-                options.set_center(center.into());
-            }
+            options.set_center(center.get_untracked().into());
             let leaflet_map = Map::new(&map_div.id(), &options);
 
             // Setup events
@@ -82,6 +80,12 @@ pub fn MapContainer(
                 map.set(Some(leaflet_map));
             }
         });
+    });
+
+    // We re-center the map on each change of the center
+    create_effect(move |_| {
+        let new_gps = center.get();
+        map_context.map().map(|m| m.fly_to(&LatLng::new(new_gps.lat, new_gps.lng), zoom));
     });
 
     on_cleanup(move || {
