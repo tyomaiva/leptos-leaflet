@@ -1,3 +1,5 @@
+use core::time::Duration;
+
 use crate::components::context::extend_context_with_overlay;
 use crate::components::position::Position;
 use leptos::*;
@@ -15,6 +17,8 @@ pub fn Marker(
     /// Position for the Marker
     #[prop(into)]
     position: MaybeSignal<Position>,
+    #[prop(into)]
+    feedback_position: WriteSignal<Option<Position>>,
     #[prop(into, optional)] draggable: MaybeSignal<bool>,
     #[prop(into, optional)] keyboard: LeafletMaybeSignal<bool>,
     #[prop(into, optional)] title: LeafletMaybeSignal<String>,
@@ -113,6 +117,17 @@ pub fn Marker(
             overlay.set_value(Some(marker));
         };
     });
+
+    const DRAG_POLL_INTERVAL: Duration = Duration::from_millis(100);
+    let _ = leptos_use::use_interval_fn(
+        move || {
+            if let Some(marker) = overlay.get_value() {
+                let gps = marker.get_lat_lng();
+                feedback_position.set(Some(Position::new(gps.lat(), gps.lng())));
+            }
+        },
+        DRAG_POLL_INTERVAL.as_millis() as u64,
+    );
 
     let position_stop = watch(
         move || position_tracking.get(),

@@ -14,6 +14,7 @@ js-sys = "0.3"
 
 leaflet = "0.4"
 leptos = { version = "0.6", default-features = false }
+leptos-use = "0.13"
 leptos_meta = { version = "0.6", default-features = false }
 
 paste = "1.0"
